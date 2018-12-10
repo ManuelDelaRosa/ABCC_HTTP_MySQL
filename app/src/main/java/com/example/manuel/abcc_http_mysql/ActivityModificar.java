@@ -1,0 +1,105 @@
+package com.example.manuel.abcc_http_mysql;
+
+import android.app.Activity;
+import android.content.Context;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
+import android.widget.EditText;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import controlador.Analizador_JSON;
+
+public class ActivityModificar extends Activity {
+    EditText cajaNumControl,cajaNombre,cajaPrimerAp,cajaSegundoAp,cajaEdad,cajaSemestre,cajaCarrera;
+
+    protected void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_modificar);
+        cajaNumControl=findViewById(R.id.cajaNumControl2);
+        cajaNombre=findViewById(R.id.cajaNombre2);
+        cajaPrimerAp=findViewById(R.id.cajaPrimerAp2);
+        cajaSegundoAp=findViewById(R.id.cajaSegundoAp2);
+        cajaEdad=findViewById(R.id.cajaEdad2);
+        cajaSemestre=findViewById(R.id.cajaSemestre2);
+        cajaCarrera=findViewById(R.id.cajaCarrera2);
+
+
+    }
+
+    public void modificarAlumnos(View v){
+        String nc=cajaNumControl.getText().toString();
+        String n=cajaNombre.getText().toString();
+        String pa=cajaPrimerAp.getText().toString();
+        String sa=cajaSegundoAp.getText().toString();
+        String e=cajaEdad.getText().toString();
+        String s=cajaSemestre.getText().toString();
+        String c=cajaCarrera.getText().toString();
+
+        //comprobar conexion de wifi
+
+        ConnectivityManager cm =(ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+        NetworkInfo ni= cm.getActiveNetworkInfo();//checar los permisos
+
+        //conectar y enviar datos para guardar en MySQL
+        if (ni != null && ni.isConnected()){
+            new ModificarAlumno().execute(nc,n,pa,sa,e,s,c);
+        }
+
+
+
+
+    }//METODO AGREGAR ALUMNOS
+
+
+    ///CLLASE INTERNA PARA REALIZAR EL ENVIO DE DATOS EN OTRO HILO DE EJECUCION
+
+    class ModificarAlumno extends AsyncTask<String,String,String> {
+
+
+        @Override
+        protected String doInBackground(String... args) {
+            Map<String,String> mapDatos=new HashMap<String, String>();
+            mapDatos.put("nc",args[0]);
+            mapDatos.put("n",args[1]);
+            mapDatos.put("pa",args[2]);
+            mapDatos.put("sa",args[3]);
+            mapDatos.put("e",args[4]);
+            mapDatos.put("s",args[5]);
+            mapDatos.put("c",args[6]);
+
+            Analizador_JSON analizador_json= new Analizador_JSON();
+            //url para forma local
+            //si se quiere utilizar  el servidor proxmox se tiene que poner la direccion del servido y el puerto
+            //10.0.2.2
+            String url ="http://192.168.1.70/Semestre-agosto-diciembre/Sistema_ABCC_MSQL/web_service_http_android/modificar_alumnos.php";
+            String metodo="POST";
+
+            JSONObject resultado = analizador_json.peticionHTTP(url,metodo,mapDatos);
+            int r=0;
+            try {
+                r =resultado.getInt("exito");
+            } catch (JSONException e) {
+                e.printStackTrace();
+            }
+
+            if (r==1){
+                Log.i("Msj resultado", "REGISTRO AGREGADO");
+                //  Toast.makeText(getApplicationContext(),"ALUMNO AGREGADO ",Toast.LENGTH_LONG).show();
+
+            }else
+                Log.i("Msj resultado", "NO AGREGADO ERROR");
+
+
+            return null;
+        }
+    }
+}
